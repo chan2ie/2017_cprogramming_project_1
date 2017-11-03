@@ -10,6 +10,7 @@ int run_query(int *height, int *width, char** image);
 int run_query_1(int *height, int* width, char*** image);
 int run_query_3(int *height, int* width, char*** image);
 void print_image(int height, int width, char** image);
+void swap(char* ch1, char* ch2);
 void free_canvas(int height, char** image);
 char** resize(int arg1, int* height, int* width, char** image);
 char** rotate(int* height, int* width, int angle, char** image);
@@ -115,7 +116,7 @@ int get_character(char*** image, int height, int width){
 int run_query (int *height, int *width, char** image){
 	int which_query;
 
-	printf("Input query :");
+	printf("Input query : ");
 	scanf("%d", &which_query);
 	
 	switch(which_query){
@@ -142,10 +143,15 @@ int run_query (int *height, int *width, char** image){
 int run_query_1(int *height, int *width, char*** image){
     int option, temp;
     
-    printf("Resize\n");
+    printf("\nResize\n");
     printf("Input 0 or 1 : ");
     scanf("%d", &option);
     
+    if(option != 0 && option != 1){
+        printf("!ERROR! : That is not a valid choice.\n");
+        return 1;
+    }
+
     temp = *height;
 
     *image = resize(option, height, width, *image);
@@ -154,7 +160,25 @@ int run_query_1(int *height, int *width, char*** image){
         return 1;
     }
 
-    print_image(*height, *width, *image);
+    print_image(*height, *width,  *image);
+
+    return 0;
+}
+int run_query_3(int *height, int *width, char*** image){
+    int option;
+
+    printf("\nFlip\n");
+    printf("Input 0 or 1 : ");
+    scanf("%d", &option);
+    
+    if(option != 0 && option != 1){
+        printf("!ERROR! : That is not a valid choice.\n");
+        return 1;
+    }
+
+    flip(*height, *width, option, image);
+    
+    print_image(*height, *width,  *image);
 
     return 0;
 }
@@ -201,6 +225,31 @@ char** resize(int arg1, int* height, int* width, char** image){
 
         return result_image;
     }
+}
+
+void flip(int height, int width, int angle, char*** image){
+    if(angle == 0){
+        for(int i = 0; i < height/2; i++){
+            for(int j = 0; j < width; j++){
+                swap(&(*image)[i][j], &(*image)[height - i -1 ][j]);
+            }
+        }
+    }
+    if(angle == 1){
+        for(int j = 0; j < width/2; j++){
+            for(int i = 0; i < height; i++){
+                swap(&(*image)[i][j], &(*image)[i][width - j - 1]);
+            }
+        }
+    }
+}
+
+void swap(char* ch1, char* ch2){
+    char temp;
+
+    temp = *ch1;
+    *ch1 = *ch2;
+    *ch2 = temp;
 }
 
 void free_canvas(int height, char** image){
