@@ -2,17 +2,18 @@
 #include <stdlib.h>
 
 int run_function();
-int read_image(int *height, int *width, char** image);
+int read_image(int *height, int *width, char*** image);
 int check_size(int height, int width);
 char** make_board(char** image, int height, int width);
-int get_character(char** image, int height, int width);
+int get_character(char*** image, int height, int width);
 int run_query(int *height, int *width, char** image);
-int run_query_1(int *height, int* width, char** image);
+int run_query_1(int *height, int* width, char*** image);
+int run_query_3(int *height, int* width, char*** image);
 void print_image(int height, int width, char** image);
 void free_canvas(int height, char** image);
 char** resize(int arg1, int* height, int* width, char** image);
 char** rotate(int* height, int* width, int angle, char** image);
-void flip(int height, int width, int flag, char** image);
+void flip(int height, int width, int flag, char*** image);
 char* copy(int x1, int y1, int c_h, int c_w, int height, int width, char** image);
 void paste(int x2, int y2, int height, int width, char** image, char* temp);
 
@@ -34,19 +35,21 @@ int run_function(){
     int height, width;
 	int testcase_query;
 
-	if (read_image(&height, &width, image) == 1){
+	if (read_image(&height, &width, &image) == 1){
 		return 1;
 	}
-
-	printf("Input number of query : ");
+   
+    printf("Input number of query : ");
 	scanf("%d", &testcase_query);
 
 	for(int i = 0; i < testcase_query; i++){
 		run_query(&height, &width, image);
 	}	
+    return 0;
 }
 
-int read_image(int *height, int *width, char** image){
+int read_image(int *height, int *width, char*** image_address){
+    char** image;
 
 	printf("Input height, width : ");
 	scanf("%d%d", height, width);
@@ -59,11 +62,12 @@ int read_image(int *height, int *width, char** image){
 	image = make_board(image, *height, *width);
 
 	printf("Input the image :\n");
-	if(get_character(image, *height, *width) == 1){
+	if(get_character(&image, *height, *width) == 1){
 		printf("!ERROR! : Your image is bigger than your canvas.\n");
 		return 1;
 	}
 
+    *image_address = image;
 	return 0;
 }
 
@@ -86,9 +90,9 @@ char** make_board(char** image, int height, int width){
 	return image;
 }
 
-int get_character(char** image, int height, int width){
+int get_character(char*** image, int height, int width){
 	char temp;
-
+    char **temp_image = *image;
 	getchar();
 
 	for(int i = 0; i < height; i++){
@@ -101,7 +105,7 @@ int get_character(char** image, int height, int width){
 				return 1;
 			}
 
-			image[i][j] = temp;
+			temp_image[i][j] = temp;
 		}
 	}
 
@@ -116,11 +120,12 @@ int run_query (int *height, int *width, char** image){
 	
 	switch(which_query){
 		case 1 : 
-			run_query_1(height, width, image);
+			run_query_1(height, width, &image);
 			break;
 		case 2 :
 			break;
 		case 3 :
+            run_query_3(height, width, &image);
 			break;
 		case 4 :
 			break;
@@ -134,18 +139,22 @@ int run_query (int *height, int *width, char** image){
 	return 0;
 }
 
-int run_query_1(int *height, int *width, char** image){
-    int option;
+int run_query_1(int *height, int *width, char*** image){
+    int option, temp;
     
     printf("Resize\n");
     printf("Input 0 or 1 : ");
     scanf("%d", &option);
+    
+    temp = *height;
 
-    if (resize(option, height, width, image) == 1){
+    *image = resize(option, height, width, *image);
+
+    if(temp == *height){
         return 1;
     }
 
-    print_image(*height, *width, image);
+    print_image(*height, *width, *image);
 
     return 0;
 }
@@ -161,15 +170,16 @@ char** resize(int arg1, int* height, int* width, char** image){
 
         for(int i = 0; i < *height; i++){
             for(int j = 0; j < *width; j++){
-                result_image[2 * i][2 * j] = image[i][j];
-                result_image[2 * i + 1][2 * j] = image[i][j];
-                result_image[2 * i][2 * j + 1] = image[i][j];
-                result_image[2 * i + 1][2 * j + 1] = image[i][j];
+                result_image[2 * i][2 * j] = (image)[i][j];
+                result_image[2 * i + 1][2 * j] = (image)[i][j];
+                result_image[2 * i][2 * j + 1] = (image)[i][j];
+                result_image[2 * i + 1][2 * j + 1] = (image)[i][j];
             }
         }
         
         free_canvas(*height, image);
-
+        *height = *height * 2;
+        *width = *width * 2;
 
         return result_image;
     }
@@ -177,6 +187,19 @@ char** resize(int arg1, int* height, int* width, char** image){
         if(*height == 1 || *width == 1){
             printf("!ERROR! : Your image is too small to down-size.\n");
         }
+        result_image = make_board(result_image, *height / 2, *width / 2);
+
+        for(int i = 0; i < *height / 2; i++){
+            for(int j = 0; j < *width / 2; j++){
+                result_image[i][j] = ((image)[2 * i][2 * j] + (image)[2 * i + 1][2 * j] + (image)[2 * i][2 * j + 1] + (image)[2 * i + 1][2 * j + 1]) / 4;
+            }
+        }
+        
+        free_canvas(*height, image);
+        *height = *height / 2;
+        *width = *width / 2;
+
+        return result_image;
     }
 }
 
