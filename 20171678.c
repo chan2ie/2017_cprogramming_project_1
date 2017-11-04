@@ -8,15 +8,20 @@ char** make_board(char** image, int height, int width);
 int get_character(char*** image, int height, int width);
 int run_query(int *height, int *width, char** image);
 int run_query_1(int *height, int* width, char*** image);
+int run_query_2(int *height, int* width, char*** image);
 int run_query_3(int *height, int* width, char*** image);
+int run_query_4(int *height, int* width, char*** image);
+int run_query_5(int *height, int* width, char*** image);
 void print_image(int height, int width, char** image);
 void swap(char* ch1, char* ch2);
 void free_canvas(int height, char** image);
+char** realloc_canvas(int height, int width, char** image);
 char** resize(int arg1, int* height, int* width, char** image);
 char** rotate(int* height, int* width, int angle, char** image);
 void flip(int height, int width, int flag, char*** image);
 char* copy(int x1, int y1, int c_h, int c_w, int height, int width, char** image);
 void paste(int x2, int y2, int height, int width, char** image, char* temp);
+void fill();
 
 int main(){
 	int testcase;
@@ -124,6 +129,7 @@ int run_query (int *height, int *width, char** image){
 			run_query_1(height, width, &image);
 			break;
 		case 2 :
+			run_query_2(height, width, &image);
 			break;
 		case 3 :
             run_query_3(height, width, &image);
@@ -164,6 +170,26 @@ int run_query_1(int *height, int *width, char*** image){
 
     return 0;
 }
+
+int run_query_2(int *height, int *width, char*** image){
+    int option;
+
+    printf("\nRotate\n");
+    printf("Input 0 or 1 or 2 : ");
+    scanf("%d", &option);
+    
+    if(option != 0 && option != 1 && option != 2){
+        printf("!ERROR! : That is not a valid choice.\n");
+        return 1;
+    }
+
+    *image = rotate(height, width, option, *image);
+
+    print_image(*height, *width,  *image);
+
+    return 0;
+}
+
 int run_query_3(int *height, int *width, char*** image){
     int option;
 
@@ -204,6 +230,8 @@ char** resize(int arg1, int* height, int* width, char** image){
         free_canvas(*height, image);
         *height = *height * 2;
         *width = *width * 2;
+        
+        printf("Result_resize height : %d, width : %d\n",*height, *width);
 
         return result_image;
     }
@@ -223,19 +251,53 @@ char** resize(int arg1, int* height, int* width, char** image){
         *height = *height / 2;
         *width = *width / 2;
 
+        printf("Result_resize height : %d, width : %d\n",*height, *width);
+        
         return result_image;
     }
 }
 
-void flip(int height, int width, int angle, char*** image){
-    if(angle == 0){
+char** rotate(int *height, int *width, int angle, char** image){
+    char** result_image;
+    result_image = make_board(result_image, *height, *width);
+
+    for(int count = 0; count <= angle; count++){
+        result_image = realloc_canvas(*width, *height, result_image);
+
+		for(int i = 0; i < *height; i++){
+			for(int j = 0; j < *width; j++){
+				result_image[j][*height - 1 - i] = image[i][j];
+			}
+		}
+
+		free_canvas(*height, image);
+		
+        int temp;
+		temp = *height;
+		*height = *width;
+		*width = temp;
+		
+		image = result_image;
+
+        if (count != angle) {
+            result_image = make_board(result_image, *height, *width);
+        }
+	}
+
+    printf("Result_rotate height : %d, width : %d\n",*height, *width);
+
+	return image;
+}
+
+void flip(int height, int width, int flag, char*** image){
+    if(flag == 0){
         for(int i = 0; i < height/2; i++){
             for(int j = 0; j < width; j++){
                 swap(&(*image)[i][j], &(*image)[height - i -1 ][j]);
             }
         }
     }
-    if(angle == 1){
+    if(flag == 1){
         for(int j = 0; j < width/2; j++){
             for(int i = 0; i < height; i++){
                 swap(&(*image)[i][j], &(*image)[i][width - j - 1]);
@@ -257,6 +319,21 @@ void free_canvas(int height, char** image){
         free(image[i]);
     }
     free(image);
+}
+
+char** realloc_canvas(int height, int width, char** image){
+    int prev_height = width;
+    int prev_width = height;
+
+    image = realloc(image, width * sizeof(char*));
+    for (int i = 0; i < prev_height; i ++) {
+		image[i] = realloc(image[i], width*sizeof(char));
+    }
+    for (int i = prev_height; i < height; i ++) {
+        image[i] = malloc(width * sizeof(char));
+    }
+
+    return image;
 }
 
 void print_image(int height, int width, char** image){
